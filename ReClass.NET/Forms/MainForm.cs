@@ -502,6 +502,8 @@ namespace ReClassNET.Forms
 
 			createClassFromNodesToolStripMenuItem.Enabled = count > 0 && !nodeIsClass;
 			dissectNodesToolStripMenuItem.Enabled = count > 0 && !nodeIsClass;
+			
+			searchClassValuesToolStripMenuItem.Enabled = count == 1 && nodeIsClass;
 			searchForEqualValuesToolStripMenuItem.Enabled = count == 1 && nodeIsSearchableValueNode;
 
 			pasteNodesToolStripMenuItem.Enabled = count == 1 && ReClassClipboard.ContainsNodes;
@@ -1063,6 +1065,34 @@ namespace ReClassNET.Forms
 				return;
 			}
 			memoryViewControl.InitCurrentClassFromRTTI(node as ClassNode);
+		}
+
+		private void searchClassValuesToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			var node = memoryViewControl.GetSelectedNodes().Select(s => s.Node).FirstOrDefault();
+			if (!(node is ClassNode classNode))
+			{
+				return;
+			}
+
+			var process = Program.RemoteProcess;
+			IntPtr startAddress;
+
+			try
+			{
+				startAddress = process.ParseAddress(classNode.AddressFormula);
+			}
+			catch (ParseException)
+			{
+				startAddress = IntPtr.Zero;
+			}
+
+			var stopAddress = startAddress.ToInt64() + classNode.MemorySize;
+
+			var scanner = new ScannerForm(Program.RemoteProcess);
+			scanner.StartAddressText = startAddress.ToString("X");
+			scanner.StopAddressText = stopAddress.ToString("X");
+			scanner.Show();
 		}
 	}
 }
